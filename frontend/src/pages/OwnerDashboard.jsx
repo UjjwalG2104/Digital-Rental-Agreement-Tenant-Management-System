@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
+import PropertySearch from "../components/PropertySearch.jsx";
+import ImageGallery from "../components/ImageGallery.jsx";
+import NotificationCenter from "../components/NotificationCenter.jsx";
+import AnalyticsDashboard from "../components/AnalyticsDashboard.jsx";
 
 const OwnerDashboard = () => {
   const { token, user, logout } = useAuth();
   const [properties, setProperties] = useState([]);
+  const [searchResults, setSearchResults] = useState({ properties: [], pagination: {} });
+  const [isSearchMode, setIsSearchMode] = useState(false);
   const [agreements, setAgreements] = useState([]);
   const [summary, setSummary] = useState(null);
   const [propForm, setPropForm] = useState({
@@ -57,6 +63,44 @@ const OwnerDashboard = () => {
     const { name, value } = e.target;
     setAgreementForm(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleSearchResults = (results) => {
+    setSearchResults(results);
+    setIsSearchMode(true);
+  };
+
+  const clearSearch = () => {
+    setIsSearchMode(false);
+    setSearchResults({ properties: [], pagination: {} });
+  };
+
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [showGallery, setShowGallery] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'analytics', 'properties', 'agreements'
+
+  const handleImageUpdate = (updatedProperty) => {
+    // Update properties list
+    setProperties(prev => prev.map(p => p._id === updatedProperty._id ? updatedProperty : p));
+    // Update search results if in search mode
+    if (isSearchMode) {
+      setSearchResults(prev => ({
+        ...prev,
+        properties: prev.properties.map(p => p._id === updatedProperty._id ? updatedProperty : p)
+      }));
+    }
+  };
+
+  const openGallery = (property) => {
+    setSelectedProperty(property);
+    setShowGallery(true);
+  };
+
+  const closeGallery = () => {
+    setSelectedProperty(null);
+    setShowGallery(false);
+  };
+
+  const displayProperties = isSearchMode ? searchResults.properties : properties;
 
   const createProperty = async (e) => {
     e.preventDefault();
@@ -118,9 +162,12 @@ const OwnerDashboard = () => {
           <h2>Owner Dashboard</h2>
           <p>{user?.name}</p>
         </div>
-        <button className="btn btn-outline" onClick={logout}>
-          Logout
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <NotificationCenter token={token} user={user} />
+          <button className="btn btn-outline" onClick={logout}>
+            Logout
+          </button>
+        </div>
       </header>
 
       {summary && (
@@ -143,7 +190,27 @@ const OwnerDashboard = () => {
       {message && <div className="alert success">{message}</div>}
       {error && <div className="alert error">{error}</div>}
 
-      <div className="grid-2">
+      {/* Tab Navigation */}
+      <div className="card">
+        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '1rem' }}>
+          {['overview', 'analytics', 'properties', 'agreements'].map((tab) => (
+            <button
+              key={tab}
+              className={`btn ${activeTab === tab ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setActiveTab(tab)}
+              style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <>
+          <PropertySearch onSearchResults={handleSearchResults} token={token} />
+          <div className="grid-2">
         <section className="card">
           <h3>Add Property</h3>
           <p style={{ fontSize: "0.85rem", marginTop: 4, marginBottom: 12, color: "#9ca3af" }}>
@@ -310,54 +377,88 @@ const OwnerDashboard = () => {
           </form>
         </section>
       </div>
+      </>
+      )}
 
-      <section className="grid-2">
-        <div className="card">
-          <h3>My Properties</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>City</th>
-                <th>Monthly Rent</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {properties.map((p) => (
-                <tr key={p._id}>
-                  <td>{p.title}</td>
-                  <td>{p.city}</td>
-                  <td>₹{p.monthlyRent}</td>
-                  <td>
-                    <button
-                      className="btn btn-small btn-ghost"
-                      type="button"
-                      onClick={async () => {
-                        if (!window.confirm("Remove this property?")) return;
-                        setMessage("");
-                        setError("");
-                        try {
-                          await api.delete(`/api/owner/properties/${p._id}`);
-                          setMessage("Property deleted.");
-                          loadData();
-                        } catch (err) {
-                          console.error("Delete property error (frontend)", err);
-                          setError(
-                            err.response?.data?.message || "Failed to delete property. Please try again."
-                          );
-                        }
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
+      {activeTab === 'analytics' && (
+        <AnalyticsDashboard token={token} />
+      )}
+
+      {activeTab === 'properties' && (
+        <>
+          <PropertySearch onSearchResults={handleSearchResults} token={token} />
+          <div className="card">
+            <h3>My Properties</h3>
+            {isSearchMode && (
+              <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ margin: 0, color: '#6b7280' }}>
+                  Found {searchResults.pagination.totalProperties || 0} properties
+                </p>
+                <button 
+                  className="btn btn-small btn-outline"
+                  onClick={clearSearch}
+                  style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
+                >
+                  Clear Search
+                </button>
+              </div>
+            )}
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>City</th>
+                  <th>Monthly Rent</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {displayProperties.map((p) => (
+                  <tr key={p._id}>
+                    <td>{p.title}</td>
+                    <td>{p.city}</td>
+                    <td>₹{p.monthlyRent}</td>
+                    <td>
+                      <button
+                        className="btn btn-small btn-ghost"
+                        type="button"
+                        onClick={() => openGallery(p)}
+                        style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative', marginRight: '0.5rem' }}
+                      >
+                        📷 Images
+                      </button>
+                      <button
+                        className="btn btn-small btn-ghost"
+                        type="button"
+                        onClick={async () => {
+                          if (!window.confirm("Remove this property?")) return;
+                          setMessage("");
+                          setError("");
+                          try {
+                            await api.delete(`/api/owner/properties/${p._id}`);
+                            setMessage("Property deleted.");
+                            loadData();
+                          } catch (err) {
+                            console.error("Delete property error (frontend)", err);
+                            setError(
+                              err.response?.data?.message || "Failed to delete property. Please try again."
+                            );
+                          }
+                        }}
+                        style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
+      {activeTab === 'agreements' && (
         <div className="card">
           <h3>Agreements</h3>
           <table>
@@ -395,7 +496,58 @@ const OwnerDashboard = () => {
             </tbody>
           </table>
         </div>
-      </section>
+      )}
+
+      {/* Image Gallery Modal */}
+      {showGallery && selectedProperty && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={closeGallery}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '1rem',
+              padding: '2rem',
+              maxWidth: '90%',
+              maxHeight: '90%',
+              overflow: 'auto',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="btn btn-outline"
+              onClick={closeGallery}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                pointerEvents: 'auto',
+                zIndex: 10
+              }}
+            >
+              × Close
+            </button>
+            <ImageGallery
+              property={selectedProperty}
+              token={token}
+              onImageUpdate={handleImageUpdate}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
