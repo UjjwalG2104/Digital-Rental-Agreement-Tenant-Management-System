@@ -5,6 +5,10 @@ import PropertySearch from "../components/PropertySearch.jsx";
 import ImageGallery from "../components/ImageGallery.jsx";
 import NotificationCenter from "../components/NotificationCenter.jsx";
 import AnalyticsDashboard from "../components/AnalyticsDashboard.jsx";
+import AvailabilityCalendar from "../components/AvailabilityCalendar.jsx";
+import MessagingSystem from "../components/MessagingSystem.jsx";
+import MaintenanceSystem from "../components/MaintenanceSystem.jsx";
+import TenantScreening from "../components/TenantScreening.jsx";
 
 const OwnerDashboard = () => {
   const { token, user, logout } = useAuth();
@@ -76,7 +80,7 @@ const OwnerDashboard = () => {
 
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [showGallery, setShowGallery] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'analytics', 'properties', 'agreements'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'analytics', 'properties', 'agreements', 'calendar', 'messages', 'maintenance', 'screening'
 
   const handleImageUpdate = (updatedProperty) => {
     // Update properties list
@@ -193,7 +197,7 @@ const OwnerDashboard = () => {
       {/* Tab Navigation */}
       <div className="card">
         <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '1rem' }}>
-          {['overview', 'analytics', 'properties', 'agreements'].map((tab) => (
+          {['overview', 'analytics', 'properties', 'agreements', 'calendar', 'messages', 'maintenance', 'screening'].map((tab) => (
             <button
               key={tab}
               className={`btn ${activeTab === tab ? 'btn-primary' : 'btn-outline'}`}
@@ -496,6 +500,22 @@ const OwnerDashboard = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {activeTab === 'calendar' && (
+        <AvailabilityCalendar property={properties[0]} token={token} />
+      )}
+
+      {activeTab === 'messages' && (
+        <MessagingSystem token={token} user={user} />
+      )}
+
+      {activeTab === 'maintenance' && (
+        <MaintenanceSystem property={properties[0]} token={token} userRole="owner" />
+      )}
+
+      {activeTab === 'screening' && (
+        <TenantScreening token={token} property={properties[0]} />
       )}
 
       {/* Image Gallery Modal */}
