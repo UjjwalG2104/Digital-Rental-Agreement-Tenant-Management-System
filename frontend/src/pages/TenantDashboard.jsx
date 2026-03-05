@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
+import { createAuthenticatedApi } from "../utils/api.js";
+import MessagingSystem from "../components/MessagingSystem.jsx";
+import MaintenanceSystem from "../components/MaintenanceSystem.jsx";
 
 const TenantDashboard = () => {
   const { token, user, logout } = useAuth();
   const [agreements, setAgreements] = useState([]);
   const [payments, setPayments] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [activeTab, setActiveTab] = useState('agreements'); // 'agreements', 'payments', 'messages', 'maintenance'
 
-  const api = axios.create({
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  // Create authenticated API instance
+  const api = createAuthenticatedApi(token);
 
   const loadData = async () => {
     const [agrRes, payRes, notRes] = await Promise.all([
@@ -50,7 +52,24 @@ const TenantDashboard = () => {
         </button>
       </header>
 
-      <section className="grid-2">
+      {/* Tab Navigation */}
+      <div className="card">
+        <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '1rem' }}>
+          {['agreements', 'payments', 'messages', 'maintenance'].map((tab) => (
+            <button
+              key={tab}
+              className={`btn ${activeTab === tab ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setActiveTab(tab)}
+              style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'agreements' && (
         <div className="card">
           <h3>My Agreements</h3>
           <table>
@@ -84,7 +103,11 @@ const TenantDashboard = () => {
                   </td>
                   <td>
                     {a.pdfPath && (
-                      <button className="btn btn-small" onClick={() => downloadPdf(a._id)} style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}>
+                      <button
+                        className="btn btn-small btn-outline"
+                        onClick={() => downloadPdf(a._id)}
+                        style={{ pointerEvents: 'auto', zIndex: 10 }}
+                      >
                         Download
                       </button>
                     )}
@@ -94,65 +117,65 @@ const TenantDashboard = () => {
             </tbody>
           </table>
         </div>
+      )}
 
+      {activeTab === 'payments' && (
         <div className="card">
-          <h3>Notifications</h3>
-          <ul className="list">
-            {notifications.map((n) => (
-              <li key={n._id}>{n.message}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="card">
-        <h3>Payment History & Dues</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Due Date</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Late Fee</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((p) => (
-              <tr key={p._id}>
-                <td>{new Date(p.dueDate).toLocaleDateString()}</td>
-                <td>₹{p.amount}</td>
-                <td>
-                  <span
-                    className={`badge ${
-                      p.status === "paid"
-                        ? "badge-success"
-                        : p.status === "pending"
-                        ? "badge-warning"
-                        : p.status === "late"
-                        ? "badge-danger"
-                        : ""
-                    }`}
-                  >
-                    {p.status}
-                  </span>
-                </td>
-                <td>₹{p.lateFee}</td>
-                <td>
-                  {p.status === "pending" && (
-                    <button className="btn btn-small" onClick={() => markPaid(p._id)} style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}>
-                      Pay Now
-                    </button>
-                  )}
-                </td>
+          <h3>Payment History</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              {payments.map((p) => (
+                <tr key={p._id}>
+                  <td>₹{p.amount}</td>
+                  <td>{new Date(p.dueDate).toLocaleDateString()}</td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        p.status === "paid"
+                          ? "badge-success"
+                          : p.status === "pending"
+                          ? "badge-warning"
+                          : "badge-danger"
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                  </td>
+                  <td>
+                    {p.status === "pending" && (
+                      <button
+                        className="btn btn-small"
+                        onClick={() => markPaid(p._id)}
+                        style={{ pointerEvents: 'auto', zIndex: 10 }}
+                      >
+                        Pay Now
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {activeTab === 'messages' && (
+        <MessagingSystem token={token} user={user} />
+      )}
+
+      {activeTab === 'maintenance' && (
+        <MaintenanceSystem property={agreements[0]?.property} token={token} userRole="tenant" />
+      )}
     </div>
   );
 };
 
 export default TenantDashboard;
-

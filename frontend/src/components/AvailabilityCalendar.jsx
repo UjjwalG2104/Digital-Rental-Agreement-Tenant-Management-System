@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { createAuthenticatedApi } from '../utils/api.js';
 
 const AvailabilityCalendar = ({ property, token }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -8,9 +8,8 @@ const AvailabilityCalendar = ({ property, token }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingType, setBookingType] = useState('available'); // available, unavailable, maintenance
 
-  const api = axios.create({
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  // Create authenticated API instance
+  const api = createAuthenticatedApi(token);
 
   useEffect(() => {
     if (property && property._id) {
@@ -20,7 +19,7 @@ const AvailabilityCalendar = ({ property, token }) => {
 
   const fetchAvailability = async () => {
     try {
-      const response = await api.get(`/owner/properties/${property._id}/availability`, {
+      const response = await api.get(`/availability/properties/${property._id}/availability`, {
         params: {
           month: currentDate.getMonth() + 1,
           year: currentDate.getFullYear()
@@ -34,7 +33,7 @@ const AvailabilityCalendar = ({ property, token }) => {
 
   const updateAvailability = async (date, status) => {
     try {
-      await api.post(`/owner/properties/${property._id}/availability`, {
+      await api.post(`/availability/properties/${property._id}/availability`, {
         date,
         status
       });

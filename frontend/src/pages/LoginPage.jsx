@@ -3,6 +3,14 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 
+// Use the same axios instance as AuthContext
+const api = axios.create({
+  baseURL: window.location.origin,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -20,9 +28,12 @@ const LoginPage = () => {
     setError("");
     setLoading(true);
     try {
-      const res = await axios.post("/api/auth/login", form);
+      console.log('Attempting login with:', form.email);
+      const res = await api.post("/api/auth/login", form);
+      console.log('Login response:', res.data);
       login(res.data);
       const role = res.data.user.role;
+      console.log('User role:', role);
       if (role === "owner") navigate("/owner");
       else if (role === "tenant") navigate("/tenant");
       else if (role === "admin") navigate("/admin");

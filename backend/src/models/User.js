@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema(
       default: "tenant",
     },
     phone: { type: String },
+    avatar: { type: String }, // Profile picture URL
+    isOnline: { type: Boolean, default: false }, // For messaging
+    lastSeen: { type: Date },
     // For tenants, optional reference to their current property/agreement can be derived via queries
     isActive: { type: Boolean, default: true },
   },

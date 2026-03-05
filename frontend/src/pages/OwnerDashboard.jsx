@@ -9,6 +9,7 @@ import AvailabilityCalendar from "../components/AvailabilityCalendar.jsx";
 import MessagingSystem from "../components/MessagingSystem.jsx";
 import MaintenanceSystem from "../components/MaintenanceSystem.jsx";
 import TenantScreening from "../components/TenantScreening.jsx";
+import { createAuthenticatedApi } from "../utils/api.js";
 
 const OwnerDashboard = () => {
   const { token, user, logout } = useAuth();
@@ -36,10 +37,12 @@ const OwnerDashboard = () => {
   });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [showGallery, setShowGallery] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'analytics', 'properties', 'agreements', 'calendar', 'messages', 'maintenance', 'screening'
 
-  const api = axios.create({
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  // Create authenticated API instance
+  const api = createAuthenticatedApi(token);
 
   const loadData = async () => {
     const [propsRes, agrRes, sumRes] = await Promise.all([
@@ -77,10 +80,6 @@ const OwnerDashboard = () => {
     setIsSearchMode(false);
     setSearchResults({ properties: [], pagination: {} });
   };
-
-  const [selectedProperty, setSelectedProperty] = useState(null);
-  const [showGallery, setShowGallery] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'analytics', 'properties', 'agreements', 'calendar', 'messages', 'maintenance', 'screening'
 
   const handleImageUpdate = (updatedProperty) => {
     // Update properties list

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { createAuthenticatedApi } from '../utils/api.js';
 
 const MessagingSystem = ({ token, user, recipient }) => {
   const [conversations, setConversations] = useState([]);
@@ -12,9 +12,8 @@ const MessagingSystem = ({ token, user, recipient }) => {
   const [users, setUsers] = useState([]);
   const messagesEndRef = useRef(null);
 
-  const api = axios.create({
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  // Create authenticated API instance
+  const api = createAuthenticatedApi(token);
 
   useEffect(() => {
     fetchConversations();

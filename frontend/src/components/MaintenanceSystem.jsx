@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { createAuthenticatedApi } from '../utils/api.js';
 
 const MaintenanceSystem = ({ property, token, userRole }) => {
   const [requests, setRequests] = useState([]);
@@ -13,9 +13,8 @@ const MaintenanceSystem = ({ property, token, userRole }) => {
     images: []
   });
 
-  const api = axios.create({
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  // Create authenticated API instance
+  const api = createAuthenticatedApi(token);
 
   useEffect(() => {
     if (property && property._id) {

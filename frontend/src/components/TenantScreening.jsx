@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { createAuthenticatedApi } from '../utils/api.js';
 
 const TenantScreening = ({ token, property }) => {
   const [applications, setApplications] = useState([]);
@@ -25,9 +25,8 @@ const TenantScreening = ({ token, property }) => {
     documents: []
   });
 
-  const api = axios.create({
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  // Create authenticated API instance
+  const api = createAuthenticatedApi(token);
 
   useEffect(() => {
     if (property && property._id) {

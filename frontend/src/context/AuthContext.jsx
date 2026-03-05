@@ -1,6 +1,38 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 
+// Create axios instance with proper configuration
+const api = axios.create({
+  baseURL: window.location.origin,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    return config;
+  },
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', error.response?.status, error.config?.url);
+    return Promise.reject(error);
+  }
+);
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -10,14 +42,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios
+      api
         .get("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
           setUser(res.data.user);
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('Auth check failed:', err);
           setToken(null);
           localStorage.removeItem("token");
         })

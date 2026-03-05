@@ -15,6 +15,12 @@ const agreementSchema = new mongoose.Schema(
       default: "pending_approval",
     },
     pdfPath: { type: String }, // path where generated PDF is stored
+    // New fields for enhanced tracking
+    rejectionReason: { type: String, default: null }, // reason for rejection
+    rejectedAt: { type: Date, default: null }, // when rejection occurred
+    approvedAt: { type: Date, default: null }, // when approval occurred
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // admin who approved
+    rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // admin who rejected
   },
   { timestamps: true }
 );

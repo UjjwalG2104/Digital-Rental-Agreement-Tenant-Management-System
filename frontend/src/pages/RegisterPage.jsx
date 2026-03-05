@@ -3,6 +3,14 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 
+// Use the same axios instance as AuthContext
+const api = axios.create({
+  baseURL: window.location.origin,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -25,7 +33,9 @@ const RegisterPage = () => {
     setError("");
     setLoading(true);
     try {
-      const res = await axios.post("/api/auth/register", form);
+      console.log('Registering user:', form.email, 'as', form.role);
+      const res = await api.post("/api/auth/register", form);
+      console.log('Registration response:', res.data);
       login(res.data);
       const role = res.data.user.role;
       if (role === "owner") navigate("/owner");
@@ -68,6 +78,7 @@ const RegisterPage = () => {
           <select name="role" value={form.role} onChange={handleChange} style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}>
             <option value="owner">Property Owner</option>
             <option value="tenant">Tenant</option>
+            <option value="admin">Administrator</option>
           </select>
         </label>
         <button className="btn btn-primary" type="submit" disabled={loading} style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}>
